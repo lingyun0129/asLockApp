@@ -1,15 +1,22 @@
 package com.kiplening.demo.activity;
 
+import android.app.Activity;
 import android.content.Intent;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageInfo;
 import android.database.sqlite.SQLiteDatabase;
+import android.graphics.Color;
 import android.os.Bundle;
-import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
+import android.view.Gravity;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
+import android.view.ViewGroup.LayoutParams;
+import android.widget.LinearLayout;
 import android.widget.ListView;
+import android.widget.TextView;
+import android.widget.Toast;
 
 import com.kiplening.demo.R;
 import com.kiplening.demo.module.App;
@@ -17,13 +24,14 @@ import com.kiplening.demo.service.LockService;
 import com.kiplening.demo.tools.DataBaseHelper;
 import com.kiplening.demo.tools.DataBaseUtil;
 import com.kiplening.demo.tools.ListViewAdapter;
+import com.kiplening.demo.tools.SlidingMenu;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends Activity {
 
     private static MainActivity instance;
     private List<Map<String, Object>> listItems;
@@ -43,7 +51,8 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
+        //setContentView(R.layout.activity_main);
+
 
         instance = this;
 
@@ -83,15 +92,87 @@ public class MainActivity extends AppCompatActivity {
                         getPackageManager()).toString());
             }
         }
-        myList = (ListView)findViewById(R.id.list);
-        listViewAdapter = new ListViewAdapter(this,listItems);
-        myList.setAdapter(listViewAdapter);
+
+        // 左侧视图
+        View leftViewGroup = createLeftListView();
+
+        //　右侧视图
+        View listView = createRightListView();
+
+        final SlidingMenu mSlidingMenu = new SlidingMenu(this);
+        mSlidingMenu.addLeftView(leftViewGroup);
+        mSlidingMenu.addRightView(listView);
+
+        setContentView(mSlidingMenu);
+
+        //myList = (ListView)findViewById(R.id.list);
+        //listViewAdapter = new ListViewAdapter(this,listItems);
+        //myList.setAdapter(listViewAdapter);
 
         Intent intent = new Intent(MainActivity.this, LockService.class);
         intent.putStringArrayListExtra("lockList", lockList);
         startService(intent);
 
 
+    }
+
+    private View createLeftListView() {
+        LinearLayout linearLayout = new LinearLayout(getBaseContext());
+        linearLayout.setLayoutParams(new LayoutParams(300, LayoutParams.FILL_PARENT));
+        linearLayout.setOrientation(LinearLayout.VERTICAL);
+
+        TextView textViewOne = createTextView("开启应用锁", Color.WHITE);
+        TextView textViewTwo = createTextView("绑定邮箱", Color.WHITE);
+        TextView textViewThree = createTextView("修改密码", Color.WHITE);
+        TextView textViewFour = createTextView("关于", Color.WHITE);
+        //TextView textViewFive = createTextView("俺是设置", Color.WHITE);
+        linearLayout.addView(textViewOne);
+        linearLayout.addView(textViewTwo);
+        linearLayout.addView(textViewThree);
+        linearLayout.addView(textViewFour);
+        //linearLayout.addView(textViewFive);
+
+        return linearLayout;
+    }
+
+
+    private TextView createTextView(final String text, final int color) {
+        TextView textView = new TextView(getBaseContext());
+        textView.setLayoutParams(new LayoutParams(LayoutParams.FILL_PARENT, LayoutParams.WRAP_CONTENT));
+        textView.setText(text);
+        textView.setPadding(0, 50, 0, 50);
+        textView.setGravity(Gravity.CENTER);
+        textView.setBackgroundColor(color);
+        textView.setTextColor(Color.BLACK);
+        textView.setOnClickListener(new View.OnClickListener() {
+
+            @Override
+            public void onClick(View arg0) {
+                Toast.makeText(getBaseContext(), "click  " + text, Toast.LENGTH_SHORT).show();
+            }
+        });
+        return textView;
+    }
+
+    private View createRightListView() {
+        //ListView listView = (ListView)findViewById(R.id.list);
+        ListView listView = new ListView(this);
+
+        ListViewAdapter customBaseAdapter = new ListViewAdapter(getBaseContext(), listItems);
+        listView.setAdapter(customBaseAdapter);
+
+        //listView.setLayoutParams(new LayoutParams(LayoutParams.FILL_PARENT, LayoutParams.FILL_PARENT));
+        //listView.setDivider(new ColorDrawable(Color.BLACK));
+        //listView.setDividerHeight(1);
+        //listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+
+        //    @Override
+        //    public void onItemClick(AdapterView<?> arg0, View arg1, int position,
+        //                            long id) {
+        //        Toast.makeText(getBaseContext(), "World position = " + position, Toast.LENGTH_SHORT).show();
+        //    }
+        //});
+        return listView;
     }
 
     @Override
